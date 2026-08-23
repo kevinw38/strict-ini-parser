@@ -1,0 +1,25 @@
+{
+  "name": "strict-ini-parser",
+  "version": "0.1.0",
+  "description": "A strict-by-default INI parser and CLI, with an escape hatch for messy real-world files",
+  "type": "module",
+  "main": "dist/parser.js",
+  "types": "dist/parser.d.ts",
+  "bin": {
+    "ini-strict": "dist/cli.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "MIT",
+  "author": "kevinw38",
+  "devDependencies": {
+    "typescript": "^5.5.4"
+  }
+}
