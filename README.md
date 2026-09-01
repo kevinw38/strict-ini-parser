@@ -24,6 +24,9 @@ npm install
 npm run build
 ```
 
+Run the test suite with `npm test` (it builds first, then runs the compiled
+tests with Node's built-in test runner).
+
 ## Library usage
 
 ```ts

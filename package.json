@@ -12,7 +12,9 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsc"
+    "build": "tsc",
+    "pretest": "tsc",
+    "test": "node --test dist/parser.test.js"
   },
   "engines": {
     "node": ">=18"
