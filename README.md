@@ -73,6 +73,25 @@ comments after a value (`key = value ; note`) are not stripped — the whole
 remainder of the line is the value. If you want a comment, put it on its own
 line.
 
+By default `stringify` emits a fully normalized file and drops comments.
+Pass `{ preserveFormatting: true }` to `parse` to keep comments, blank
+lines, and the original key/section order for round-tripping:
+
+```ts
+const original = 'timeout = 30\n\n; the main listener\n[server]\nhost = 0.0.0.0\n';
+const doc = parse(original, { preserveFormatting: true });
+delete doc.sections.server; // its leading comment and blank line go with it
+stringify(doc);
+// "timeout = 30\n"
+```
+
+A comment or blank line directly above a `[section]` header is treated as
+belonging to that section, so deleting the section removes its leading
+comment too rather than leaving it stranded above whatever came before.
+Sections and keys added after parsing are appended in place (new keys at
+the end of their section, new sections at the end of the file); documents
+built by hand instead of via `parse` fall back to the normalized output.
+
 ## CLI usage
 
 ```
@@ -80,11 +99,13 @@ ini-strict validate config.ini
 ini-strict validate config.ini --lenient
 ini-strict to-json config.ini
 ini-strict format config.ini --lenient
+ini-strict format config.ini --preserve-format
 ```
 
 `validate` exits 1 and prints `file:line: message` on the first problem it
 finds. `to-json` prints the parsed `IniDocument` as JSON. `format` re-emits
-the file with consistent spacing and quoting.
+the file with consistent spacing and quoting; add `--preserve-format` to
+keep comments, blank lines, and key order instead of normalizing them away.
 
 ## What "strict" checks
 

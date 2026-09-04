@@ -165,3 +165,57 @@ test('stringify quotes values that need it and leaves plain values bare', () => 
   assert.match(text, /^spaced = "  padded  "$/m);
   assert.match(text, /^empty = ""$/m);
 });
+
+test('without preserveFormatting, stringify drops comments as before', () => {
+  const doc = parse('; note\nkey = value\n');
+  assert.equal(stringify(doc), 'key = value\n');
+});
+
+test('preserveFormatting round-trips comments, blank lines, and order untouched', () => {
+  const original =
+    '; top of file\ntop = value\n\n[server]\n; server settings\nhost = 0.0.0.0\nport = 8080\n';
+  const doc = parse(original, { preserveFormatting: true });
+  assert.equal(stringify(doc), original);
+});
+
+test('preserveFormatting keeps comments while picking up an edited value', () => {
+  const original = '[server]\n; the bind port\nport = 8080\n';
+  const doc = parse(original, { preserveFormatting: true });
+  doc.sections.server.port = '9090';
+  assert.equal(stringify(doc), '[server]\n; the bind port\nport = 9090\n');
+});
+
+test('preserveFormatting drops the line for a deleted key', () => {
+  const original = 'a = 1\nb = 2\nc = 3\n';
+  const doc = parse(original, { preserveFormatting: true });
+  delete doc.global.b;
+  assert.equal(stringify(doc), 'a = 1\nc = 3\n');
+});
+
+test('preserveFormatting drops a whole deleted section, including its comments', () => {
+  const original = 'x = 1\n\n[old]\n; unused now\ny = 2\n';
+  const doc = parse(original, { preserveFormatting: true });
+  delete doc.sections.old;
+  assert.equal(stringify(doc), 'x = 1\n');
+});
+
+test('preserveFormatting appends a key added to an existing section in place', () => {
+  const original = '[server]\nhost = 0.0.0.0\n\n[other]\nz = 1\n';
+  const doc = parse(original, { preserveFormatting: true });
+  doc.sections.server.port = '8080';
+  assert.equal(stringify(doc), '[server]\nhost = 0.0.0.0\nport = 8080\n\n[other]\nz = 1\n');
+});
+
+test('preserveFormatting appends a brand new section at the end', () => {
+  const original = '[server]\nhost = 0.0.0.0\n';
+  const doc = parse(original, { preserveFormatting: true });
+  doc.sections.client = { timeout: '30' };
+  assert.equal(stringify(doc), '[server]\nhost = 0.0.0.0\n\n[client]\ntimeout = 30\n');
+});
+
+test('preserveFormatting appends a new global key ahead of the first section', () => {
+  const original = 'top = value\n\n[server]\nhost = 0.0.0.0\n';
+  const doc = parse(original, { preserveFormatting: true });
+  doc.global.extra = 'added';
+  assert.equal(stringify(doc), 'top = value\nextra = added\n\n[server]\nhost = 0.0.0.0\n');
+});

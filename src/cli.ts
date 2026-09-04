@@ -11,8 +11,10 @@ commands:
   format     parse the file and print it back out in normalized form
 
 flags:
-  --lenient  recover from duplicate keys/sections, malformed lines, and
-             unterminated quotes instead of failing`);
+  --lenient          recover from duplicate keys/sections, malformed lines,
+                     and unterminated quotes instead of failing
+  --preserve-format  (format only) keep comments, blank lines, and existing
+                     key order instead of emitting a fully normalized file`);
 }
 
 function main(argv: string[]): number {
@@ -23,6 +25,7 @@ function main(argv: string[]): number {
   }
 
   const lenient = rest.includes('--lenient');
+  const preserveFormatting = command === 'format' && rest.includes('--preserve-format');
 
   let text: string;
   try {
@@ -33,7 +36,7 @@ function main(argv: string[]): number {
   }
 
   try {
-    const doc = parse(text, { lenient });
+    const doc = parse(text, { lenient, preserveFormatting });
     switch (command) {
       case 'validate':
         console.log('ok');
