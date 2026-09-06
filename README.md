@@ -92,6 +92,44 @@ Sections and keys added after parsing are appended in place (new keys at
 the end of their section, new sections at the end of the file); documents
 built by hand instead of via `parse` fall back to the normalized output.
 
+## Typed schema validation
+
+`parse` always gives you strings, since INI has no type syntax. `validate`
+turns those strings into the types you actually want, checks required keys
+are present, and reports every problem at once instead of stopping at the
+first one:
+
+```ts
+import { parse } from 'strict-ini-parser';
+import { validate, SchemaValidationError } from 'strict-ini-parser/schema';
+
+const doc = parse('[server]\nhost = 0.0.0.0\nport = 8080\n');
+
+try {
+  const config = validate(doc, {
+    sections: {
+      server: {
+        host: { type: 'string', required: true },
+        port: { type: 'number', required: true },
+        timeout: { type: 'number', default: 30 },
+      },
+    },
+  });
+  config.sections.server.port; // number, 8080
+  config.sections.server.timeout; // number, 30 (not in the file, filled from default)
+} catch (err) {
+  if (err instanceof SchemaValidationError) {
+    console.error(err.errors); // one message per problem found
+  }
+}
+```
+
+A field is `string`, `number`, or `boolean`. Missing a `required` key, or a
+value that doesn't match its declared type (`port = abc` for a `number`
+field), adds to the error list rather than throwing immediately, so you see
+every problem in the file in one pass. A field with neither `required` nor
+`default` is optional and comes back `undefined` when absent.
+
 ## CLI usage
 
 ```

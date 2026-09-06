@@ -5,6 +5,16 @@
   "type": "module",
   "main": "dist/parser.js",
   "types": "dist/parser.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/parser.d.ts",
+      "default": "./dist/parser.js"
+    },
+    "./schema": {
+      "types": "./dist/schema.d.ts",
+      "default": "./dist/schema.js"
+    }
+  },
   "bin": {
     "ini-strict": "dist/cli.js"
   },
@@ -14,7 +24,7 @@
   "scripts": {
     "build": "tsc",
     "pretest": "tsc",
-    "test": "node --test dist/parser.test.js"
+    "test": "node --test dist/*.test.js"
   },
   "engines": {
     "node": ">=18"
