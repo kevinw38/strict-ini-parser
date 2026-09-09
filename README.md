@@ -138,12 +138,22 @@ ini-strict validate config.ini --lenient
 ini-strict to-json config.ini
 ini-strict format config.ini --lenient
 ini-strict format config.ini --preserve-format
+ini-strict diff old.ini new.ini
+ini-strict diff old.ini new.ini --lenient
 ```
 
 `validate` exits 1 and prints `file:line: message` on the first problem it
 finds. `to-json` prints the parsed `IniDocument` as JSON. `format` re-emits
 the file with consistent spacing and quoting; add `--preserve-format` to
 keep comments, blank lines, and key order instead of normalizing them away.
+
+`diff` parses both files and compares their values key by key, printing
+`- old.ini's value` / `+ new.ini's value` lines for anything added, removed,
+or changed, e.g. `- [server] port = 8080` / `+ [server] port = 9090`. It
+exits 0 if the two files parse to the same values and 1 if they differ (or
+if either file fails to parse), regardless of formatting differences like
+quoting or key order — a file re-saved by `format` diffs clean against the
+original.
 
 ## What "strict" checks
 

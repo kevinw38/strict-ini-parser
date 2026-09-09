@@ -357,6 +357,46 @@ function stringifyWithLayout(doc: IniDocument, layout: LineToken[]): string {
   return out.join('\n') + '\n';
 }
 
+/**
+ * Compares two parsed documents key by key and reports what changed, in the
+ * style of a unified diff: "- " for a value only the left side has (or the
+ * old value of something that changed), "+ " for the right side's version.
+ * Formatting differences (quoting, comments, key order) never show up here
+ * since this works on the parsed values, not the source text.
+ */
+export function diffDocuments(left: IniDocument, right: IniDocument): string[] {
+  const lines: string[] = [];
+  diffScope('', left.global, right.global, lines);
+
+  const sectionNames = new Set([...Object.keys(left.sections), ...Object.keys(right.sections)]);
+  for (const name of [...sectionNames].sort()) {
+    diffScope(`[${name}] `, left.sections[name] ?? {}, right.sections[name] ?? {}, lines);
+  }
+
+  return lines;
+}
+
+function diffScope(
+  label: string,
+  left: Record<string, string>,
+  right: Record<string, string>,
+  lines: string[],
+): void {
+  const keys = new Set([...Object.keys(left), ...Object.keys(right)]);
+  for (const key of [...keys].sort()) {
+    const inLeft = Object.prototype.hasOwnProperty.call(left, key);
+    const inRight = Object.prototype.hasOwnProperty.call(right, key);
+    if (inLeft && !inRight) {
+      lines.push(`- ${label}${key} = ${left[key]}`);
+    } else if (!inLeft && inRight) {
+      lines.push(`+ ${label}${key} = ${right[key]}`);
+    } else if (inLeft && inRight && left[key] !== right[key]) {
+      lines.push(`- ${label}${key} = ${left[key]}`);
+      lines.push(`+ ${label}${key} = ${right[key]}`);
+    }
+  }
+}
+
 function needsQuoting(value: string): boolean {
   return value === '' || value !== value.trim() || value.includes('\n') || value.includes('\r');
 }

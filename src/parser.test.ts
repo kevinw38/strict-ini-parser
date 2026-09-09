@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { parse, stringify, IniParseError } from './parser.js';
+import { parse, stringify, diffDocuments, IniParseError } from './parser.js';
 
 test('parses global keys and section keys', () => {
   const doc = parse(`
@@ -218,4 +218,30 @@ test('preserveFormatting appends a new global key ahead of the first section', (
   const doc = parse(original, { preserveFormatting: true });
   doc.global.extra = 'added';
   assert.equal(stringify(doc), 'top = value\nextra = added\n\n[server]\nhost = 0.0.0.0\n');
+});
+
+test('diffDocuments reports no lines for identical documents', () => {
+  const doc = parse('top = value\n\n[server]\nport = 8080\n');
+  assert.deepEqual(diffDocuments(doc, parse('top = value\n\n[server]\nport = 8080\n')), []);
+});
+
+test('diffDocuments reports a changed value as a removed and an added line', () => {
+  const left = parse('[server]\nport = 8080\n');
+  const right = parse('[server]\nport = 9090\n');
+  assert.deepEqual(diffDocuments(left, right), ['- [server] port = 8080', '+ [server] port = 9090']);
+});
+
+test('diffDocuments reports keys and sections only on one side', () => {
+  const left = parse('top = 1\n\n[server]\nhost = a\n');
+  const right = parse('[server]\nhost = a\n\n[database]\nuser = admin\n');
+  assert.deepEqual(diffDocuments(left, right), [
+    '- top = 1',
+    '+ [database] user = admin',
+  ]);
+});
+
+test('diffDocuments treats a section missing entirely on one side as all its keys added', () => {
+  const left = parse('[a]\nx = 1\n');
+  const right = parse('[a]\nx = 1\n\n[b]\ny = 2\nz = 3\n');
+  assert.deepEqual(diffDocuments(left, right), ['+ [b] y = 2', '+ [b] z = 3']);
 });
